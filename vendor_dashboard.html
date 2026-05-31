@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vendor Performance Intelligence</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0f172a;font-family:'Segoe UI',system-ui,sans-serif;color:#e2e8f0;min-height:100vh}
+.dash{padding:24px;max-width:1400px;margin:0 auto}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:18px;border-bottom:1px solid #1e293b;flex-wrap:wrap;gap:12px}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-icon{width:42px;height:42px;background:#3b82f6;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.logo-text{font-size:18px;font-weight:700;color:#f1f5f9}
+.logo-sub{font-size:12px;color:#64748b;margin-top:2px}
+.live-badge{background:#0f3460;color:#3b82f6;border:1px solid #1e40af;font-size:11px;padding:5px 14px;border-radius:20px;font-family:monospace;white-space:nowrap}
+.filters{display:flex;gap:14px;margin-bottom:22px;flex-wrap:wrap;align-items:center;background:#1e293b;padding:14px 18px;border-radius:12px}
+.filter-group{display:flex;align-items:center;gap:8px}
+.filter-label{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;font-weight:600}
+select,input[type=text]{background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:8px 14px;border-radius:8px;font-size:13px;outline:none;cursor:pointer}
+select:focus,input:focus{border-color:#3b82f6}
+input[type=text]{width:220px}
+input::placeholder{color:#475569}
+.filter-count{font-size:12px;color:#475569;margin-left:auto}
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:26px}
+@media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+.kpi-card{background:#1e293b;border-radius:12px;padding:18px 20px;border-left:4px solid #3b82f6;position:relative;overflow:hidden;transition:transform 0.2s}
+.kpi-card:hover{transform:translateY(-2px)}
+.kpi-card.green{border-left-color:#22c55e}
+.kpi-card.amber{border-left-color:#f59e0b}
+.kpi-card.red{border-left-color:#ef4444}
+.kpi-card.purple{border-left-color:#a855f7}
+.kpi-icon{font-size:24px;margin-bottom:10px}
+.kpi-label{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;font-weight:600}
+.kpi-value{font-size:26px;font-weight:700;color:#f1f5f9;font-family:monospace;letter-spacing:-0.5px;margin-bottom:8px}
+.kpi-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.bg-green{background:#052e16;color:#22c55e;border:1px solid #166534}
+.bg-yellow{background:#422006;color:#f59e0b;border:1px solid #92400e}
+.bg-red{background:#450a0a;color:#ef4444;border:1px solid #991b1b}
+.bg-blue{background:#0c1a3a;color:#60a5fa;border:1px solid #1e40af}
+.bg-purple{background:#2e1065;color:#a855f7;border:1px solid #6b21a8}
+.kpi-sub{font-size:11px;color:#475569;margin-top:5px}
+.section-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;margin-top:8px}
+.section-title{font-size:12px;font-weight:700;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
+.section-line{flex:1;height:1px;background:#1e293b}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:900px){.charts-grid{grid-template-columns:1fr}}
+.chart-card{background:#1e293b;border-radius:12px;padding:20px}
+.chart-title{font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.6px}
+.chart-subtitle{font-size:11px;color:#475569;margin-bottom:16px}
+.bar-wrap{overflow:hidden}
+.bar-row{display:flex;align-items:center;margin-bottom:10px;gap:10px}
+.bar-label{font-size:11px;color:#94a3b8;width:160px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
+.bar-track{flex:1;background:#0f172a;border-radius:4px;height:22px;position:relative;min-width:0}
+.bar-fill{height:100%;border-radius:4px;transition:width 0.8s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:8px}
+.bar-val{font-size:10px;font-weight:700;color:#fff;font-family:monospace;white-space:nowrap}
+.bar-val-out{font-size:10px;color:#64748b;font-family:monospace;white-space:nowrap;flex-shrink:0;width:70px}
+.hist-wrap{display:flex;align-items:flex-end;gap:4px;height:160px;padding-top:10px}
+.hist-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.hist-bar{width:100%;border-radius:4px 4px 0 0;transition:height 0.8s ease;min-height:2px}
+.hist-lbl{font-size:9px;color:#475569;text-align:center;line-height:1.2}
+.scatter-wrap{position:relative;height:260px;background:#0f172a;border-radius:8px;overflow:hidden}
+.scatter-wrap canvas{position:absolute;top:0;left:0}
+.axis-label-x{text-align:center;font-size:10px;color:#475569;margin-top:4px}
+.axis-label-y{position:absolute;left:-8px;top:50%;transform:translateY(-50%) rotate(-90deg);font-size:10px;color:#475569;white-space:nowrap}
+.legend-row{display:flex;gap:12px;margin-top:12px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#94a3b8}
+.legend-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.legend-circle{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.no-data{color:#475569;font-size:13px;text-align:center;padding:60px 0}
+.footer{text-align:center;padding:20px 0 10px;color:#334155;font-size:11px;font-family:monospace;border-top:1px solid #1e293b;margin-top:10px;line-height:2}
+.tooltip{position:fixed;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:10px 14px;font-size:12px;pointer-events:none;z-index:999;display:none;max-width:220px;box-shadow:0 4px 20px rgba(0,0,0,0.6)}
+.tt-name{color:#64748b;margin-bottom:4px;font-size:11px}
+.tt-val{font-weight:700;font-family:monospace;font-size:13px}
+</style>
+</head>
+<body>
+<div class="dash">
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">🥃</div>
+      <div>
+        <div class="logo-text">Vendor Performance Intelligence</div>
+        <div class="logo-sub">Liquor Retail &amp; Wholesale · Executive Dashboard</div>
+      </div>
+    </div>
+    <span class="live-badge" id="liveBadge">● LIVE</span>
+  </div>
+
+  <div class="filters">
+    <div class="filter-group">
+      <span class="filter-label">Order Size</span>
+      <select id="orderFilter" onchange="render()">
+        <option value="All">All</option>
+        <option value="Large">Large</option>
+        <option value="Median">Median</option>
+        <option value="Small">Small</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Search</span>
+      <input type="text" id="searchBox" placeholder="Search vendor or brand…" oninput="render()">
+    </div>
+    <span class="filter-count" id="filterCount"></span>
+  </div>
+
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <div class="section-header">
+    <span class="section-title">Vendor Analytics</span>
+    <div class="section-line"></div>
+  </div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">Top 10 Vendors by Gross Profit</div>
+      <div class="chart-subtitle">Colored by order size · Sorted descending</div>
+      <div class="bar-wrap" id="vendorBars"></div>
+      <div class="legend-row">
+        <span class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span>Large</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span>Median</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#22c55e"></span>Small</span>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Profit Margin Distribution</div>
+      <div class="chart-subtitle">Brand count by margin range</div>
+      <div class="hist-wrap" id="histogram"></div>
+      <div class="axis-label-x">Profit Margin Range (%)</div>
+      <div class="legend-row">
+        <span class="legend-item"><span class="legend-dot" style="background:#ef4444"></span>Low (0–20%)</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span>Moderate (20–30%)</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#22c55e"></span>Healthy (30%+)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <span class="section-title">Brand &amp; Efficiency Analytics</span>
+    <div class="section-line"></div>
+  </div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">Brand Performance Scatter</div>
+      <div class="chart-subtitle">Sales $ vs Profit Margin · Quadrant analysis</div>
+      <div style="position:relative">
+        <div class="scatter-wrap"><canvas id="scatterCanvas"></canvas></div>
+        <div class="axis-label-x">Total Sales ($)</div>
+      </div>
+      <div class="legend-row">
+        <span class="legend-item"><span class="legend-circle" style="background:#22c55e"></span>Stars</span>
+        <span class="legend-item"><span class="legend-circle" style="background:#f59e0b"></span>Cash Cows</span>
+        <span class="legend-item"><span class="legend-circle" style="background:#a855f7"></span>Niche</span>
+        <span class="legend-item"><span class="legend-circle" style="background:#ef4444"></span>Dogs</span>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Sales / Purchase Ratio by Vendor</div>
+      <div class="chart-subtitle">Ratio &gt; 1.3x = efficient · Top 15 vendors</div>
+      <div class="bar-wrap" id="ratioBars"></div>
+      <div class="legend-row">
+        <span class="legend-item"><span class="legend-dot" style="background:#22c55e"></span>Efficient (&gt;1.3x)</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#475569"></span>Below threshold</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    ⚡ Vendor Performance Intelligence Dashboard<br>
+    Data Source: inventory_db.db · 50 Vendors · 200 Brands · Built with Python, SQL &amp; Vanilla JS<br>
+    <span id="footerTime"></span>
+  </div>
+</div>
+<div class="tooltip" id="tooltip">
+  <div class="tt-name" id="ttName"></div>
+  <div class="tt-val" id="ttVal"></div>
+  <div class="tt-val" id="ttVal2"></div>
+</div>
+
+<script>
+const VENDORS=[{"VendorName":"DIAGEO NORTH AMERICA INC","TotalSalesDollars":67990099.42,"TotalPurchaseDollars":50097226.16,"GrossProfit":17892873.26,"ProfitMargine":33.01,"StockTurnOver":1.65,"UnsoldInventoryValue":722209.05,"SalesPurchaseRatio":2.23,"OrderSize":"Large"},{"VendorName":"MARTIGNETTI COMPANIES","TotalSalesDollars":39330359.36,"TotalPurchaseDollars":25502095.83,"GrossProfit":13828263.53,"ProfitMargine":43.6,"StockTurnOver":2.38,"UnsoldInventoryValue":-112538.34,"SalesPurchaseRatio":3.58,"OrderSize":"Median"},{"VendorName":"CONSTELLATION BRANDS INC","TotalSalesDollars":24218745.65,"TotalPurchaseDollars":15273708.08,"GrossProfit":8945037.57,"ProfitMargine":37.57,"StockTurnOver":1.36,"UnsoldInventoryValue":133617.62,"SalesPurchaseRatio":2.09,"OrderSize":"Large"},{"VendorName":"PERNOD RICARD USA","TotalSalesDollars":32063196.19,"TotalPurchaseDollars":23851164.17,"GrossProfit":8212032.02,"ProfitMargine":33.84,"StockTurnOver":1.56,"UnsoldInventoryValue":470625.61,"SalesPurchaseRatio":2.22,"OrderSize":"Large"},{"VendorName":"JIM BEAM BRANDS COMPANY","TotalSalesDollars":31423020.46,"TotalPurchaseDollars":23494304.32,"GrossProfit":7928716.14,"ProfitMargine":33.93,"StockTurnOver":2.43,"UnsoldInventoryValue":554665.63,"SalesPurchaseRatio":3.35,"OrderSize":"Large"},{"VendorName":"BACARDI USA INC","TotalSalesDollars":24854817.14,"TotalPurchaseDollars":17432020.26,"GrossProfit":7422796.88,"ProfitMargine":39.44,"StockTurnOver":2.88,"UnsoldInventoryValue":-297727.67,"SalesPurchaseRatio":3.97,"OrderSize":"Large"},{"VendorName":"E & J GALLO WINERY","TotalSalesDollars":18399899.46,"TotalPurchaseDollars":12068539.22,"GrossProfit":6331360.24,"ProfitMargine":32.77,"StockTurnOver":1.09,"UnsoldInventoryValue":228282.61,"SalesPurchaseRatio":1.67,"OrderSize":"Large"},{"VendorName":"ULTRA BEVERAGE COMPANY LLP","TotalSalesDollars":16502544.31,"TotalPurchaseDollars":11167081.61,"GrossProfit":5335462.7,"ProfitMargine":41.1,"StockTurnOver":2.53,"UnsoldInventoryValue":-188477.66,"SalesPurchaseRatio":3.69,"OrderSize":"Median"},{"VendorName":"BROWN-FORMAN CORP","TotalSalesDollars":18247230.65,"TotalPurchaseDollars":13238939.18,"GrossProfit":5008291.47,"ProfitMargine":34.24,"StockTurnOver":2.14,"UnsoldInventoryValue":177733.74,"SalesPurchaseRatio":2.96,"OrderSize":"Large"},{"VendorName":"M S WALKER INC","TotalSalesDollars":14706458.51,"TotalPurchaseDollars":9764312.6,"GrossProfit":4942145.91,"ProfitMargine":40.55,"StockTurnOver":2.04,"UnsoldInventoryValue":-102891.05,"SalesPurchaseRatio":3.07,"OrderSize":"Small"},{"VendorName":"MOET HENNESSY USA INC","TotalSalesDollars":13356453.68,"TotalPurchaseDollars":9250580.36,"GrossProfit":4105873.32,"ProfitMargine":32.7,"StockTurnOver":1.16,"UnsoldInventoryValue":126477.7,"SalesPurchaseRatio":1.66,"OrderSize":"Large"},{"VendorName":"SAZERAC CO INC","TotalSalesDollars":13099400.93,"TotalPurchaseDollars":9714369.07,"GrossProfit":3385031.86,"ProfitMargine":31.61,"StockTurnOver":1.71,"UnsoldInventoryValue":198436.41,"SalesPurchaseRatio":2.31,"OrderSize":"Large"},{"VendorName":"WINE GROUP INC","TotalSalesDollars":8304043.28,"TotalPurchaseDollars":5203801.17,"GrossProfit":3100242.11,"ProfitMargine":33.85,"StockTurnOver":1.1,"UnsoldInventoryValue":86862.57,"SalesPurchaseRatio":1.75,"OrderSize":"Large"},{"VendorName":"PROXIMO SPIRITS INC.","TotalSalesDollars":10291474.7,"TotalPurchaseDollars":7331096.34,"GrossProfit":2960378.36,"ProfitMargine":36.8,"StockTurnOver":2.74,"UnsoldInventoryValue":62736.51,"SalesPurchaseRatio":3.86,"OrderSize":"Large"},{"VendorName":"PERFECTA WINES","TotalSalesDollars":7165681.65,"TotalPurchaseDollars":4619722.66,"GrossProfit":2545958.99,"ProfitMargine":43.91,"StockTurnOver":2.71,"UnsoldInventoryValue":791.16,"SalesPurchaseRatio":4.08,"OrderSize":"Small"},{"VendorName":"SOUTHERN WINE & SPIRITS NE","TotalSalesDollars":5540980.4,"TotalPurchaseDollars":3430367.42,"GrossProfit":2110612.98,"ProfitMargine":47.59,"StockTurnOver":2.82,"UnsoldInventoryValue":-71058.27,"SalesPurchaseRatio":4.28,"OrderSize":"Small"},{"VendorName":"MAJESTIC FINE WINES","TotalSalesDollars":5374831.31,"TotalPurchaseDollars":3505853.11,"GrossProfit":1868978.2,"ProfitMargine":32.64,"StockTurnOver":0.97,"UnsoldInventoryValue":114457.32,"SalesPurchaseRatio":1.5,"OrderSize":"Large"},{"VendorName":"STE MICHELLE WINE ESTATES","TotalSalesDollars":4889920.32,"TotalPurchaseDollars":3072111.15,"GrossProfit":1817809.17,"ProfitMargine":35.82,"StockTurnOver":1.12,"UnsoldInventoryValue":41642.56,"SalesPurchaseRatio":1.77,"OrderSize":"Median"},{"VendorName":"TREASURY WINE ESTATES","TotalSalesDollars":4687109.19,"TotalPurchaseDollars":2884603.55,"GrossProfit":1802505.64,"ProfitMargine":40.26,"StockTurnOver":1.15,"UnsoldInventoryValue":23927.64,"SalesPurchaseRatio":1.86,"OrderSize":"Large"},{"VendorName":"WILLIAM GRANT & SONS INC","TotalSalesDollars":7569876.2,"TotalPurchaseDollars":5876538.26,"GrossProfit":1693337.94,"ProfitMargine":31.17,"StockTurnOver":1.36,"UnsoldInventoryValue":401960.83,"SalesPurchaseRatio":1.87,"OrderSize":"Large"},{"VendorName":"PINE STATE TRADING CO","TotalSalesDollars":4480059.02,"TotalPurchaseDollars":2865890.04,"GrossProfit":1614168.98,"ProfitMargine":40.25,"StockTurnOver":2.3,"UnsoldInventoryValue":-15563.02,"SalesPurchaseRatio":3.48,"OrderSize":"Small"},{"VendorName":"CAMPARI AMERICA","TotalSalesDollars":5536096.97,"TotalPurchaseDollars":4052963.68,"GrossProfit":1483133.29,"ProfitMargine":34.2,"StockTurnOver":1.45,"UnsoldInventoryValue":19863.28,"SalesPurchaseRatio":1.99,"OrderSize":"Large"},{"VendorName":"SAZERAC NORTH AMERICA INC.","TotalSalesDollars":4942047.11,"TotalPurchaseDollars":3504979.06,"GrossProfit":1437068.05,"ProfitMargine":29.48,"StockTurnOver":1.57,"UnsoldInventoryValue":25674.41,"SalesPurchaseRatio":2.12,"OrderSize":"Large"},{"VendorName":"PALM BAY INTERNATIONAL INC","TotalSalesDollars":3916054.02,"TotalPurchaseDollars":2546769.05,"GrossProfit":1369284.97,"ProfitMargine":39.38,"StockTurnOver":1.57,"UnsoldInventoryValue":-918.95,"SalesPurchaseRatio":2.39,"OrderSize":"Large"},{"VendorName":"TRINCHERO FAMILY ESTATES","TotalSalesDollars":3388966.19,"TotalPurchaseDollars":2154699.95,"GrossProfit":1234266.24,"ProfitMargine":32.24,"StockTurnOver":1.07,"UnsoldInventoryValue":27902.72,"SalesPurchaseRatio":1.64,"OrderSize":"Median"},{"VendorName":"STOLI GROUP,(USA) LLC","TotalSalesDollars":4519228.1,"TotalPurchaseDollars":3405741.88,"GrossProfit":1113486.22,"ProfitMargine":30.95,"StockTurnOver":3.83,"UnsoldInventoryValue":11631.64,"SalesPurchaseRatio":5.27,"OrderSize":"Large"},{"VendorName":"KOBRAND CORPORATION","TotalSalesDollars":2791519.71,"TotalPurchaseDollars":1741559.47,"GrossProfit":1049960.24,"ProfitMargine":51.96,"StockTurnOver":3.83,"UnsoldInventoryValue":-23153.59,"SalesPurchaseRatio":5.76,"OrderSize":"Small"},{"VendorName":"HEAVEN HILL DISTILLERIES","TotalSalesDollars":3668728.51,"TotalPurchaseDollars":2644130.1,"GrossProfit":1024598.41,"ProfitMargine":35.14,"StockTurnOver":1.4,"UnsoldInventoryValue":63194.06,"SalesPurchaseRatio":2.0,"OrderSize":"Large"},{"VendorName":"BANFI PRODUCTS CORP","TotalSalesDollars":2632085.13,"TotalPurchaseDollars":1608143.72,"GrossProfit":1023941.41,"ProfitMargine":37.56,"StockTurnOver":1.4,"UnsoldInventoryValue":15697.41,"SalesPurchaseRatio":2.19,"OrderSize":"Median"},{"VendorName":"REMY COINTREAU USA INC","TotalSalesDollars":4128578.99,"TotalPurchaseDollars":3130918.49,"GrossProfit":997660.5,"ProfitMargine":36.2,"StockTurnOver":1.65,"UnsoldInventoryValue":118598.15,"SalesPurchaseRatio":2.3,"OrderSize":"Large"},{"VendorName":"LUXCO INC","TotalSalesDollars":2706492.93,"TotalPurchaseDollars":1862411.01,"GrossProfit":844081.92,"ProfitMargine":35.61,"StockTurnOver":2.14,"UnsoldInventoryValue":-45223.0,"SalesPurchaseRatio":2.84,"OrderSize":"Large"},{"VendorName":"DIAGEO CHATEAU ESTATE WINES","TotalSalesDollars":2115002.11,"TotalPurchaseDollars":1279691.73,"GrossProfit":835310.38,"ProfitMargine":38.07,"StockTurnOver":1.26,"UnsoldInventoryValue":-38997.98,"SalesPurchaseRatio":2.03,"OrderSize":"Small"},{"VendorName":"DELICATO VINEYARDS INC","TotalSalesDollars":2306542.38,"TotalPurchaseDollars":1494318.89,"GrossProfit":812223.49,"ProfitMargine":35.08,"StockTurnOver":1.06,"UnsoldInventoryValue":7839.17,"SalesPurchaseRatio":1.66,"OrderSize":"Large"},{"VendorName":"STATE WINE & SPIRITS","TotalSalesDollars":2245844.57,"TotalPurchaseDollars":1455770.99,"GrossProfit":790073.58,"ProfitMargine":38.95,"StockTurnOver":1.7,"UnsoldInventoryValue":-60411.69,"SalesPurchaseRatio":2.52,"OrderSize":"Small"},{"VendorName":"MHW LTD","TotalSalesDollars":2336173.31,"TotalPurchaseDollars":1600532.87,"GrossProfit":735640.44,"ProfitMargine":38.65,"StockTurnOver":5.51,"UnsoldInventoryValue":-52999.36,"SalesPurchaseRatio":7.2,"OrderSize":"Median"},{"VendorName":"VINEYARD BRANDS INC","TotalSalesDollars":1825354.63,"TotalPurchaseDollars":1175591.29,"GrossProfit":649763.34,"ProfitMargine":43.17,"StockTurnOver":1.71,"UnsoldInventoryValue":26301.18,"SalesPurchaseRatio":2.62,"OrderSize":"Large"},{"VendorName":"EDRINGTON AMERICAS","TotalSalesDollars":2522278.35,"TotalPurchaseDollars":1878614.18,"GrossProfit":643664.17,"ProfitMargine":37.76,"StockTurnOver":2.68,"UnsoldInventoryValue":84028.98,"SalesPurchaseRatio":3.6,"OrderSize":"Large"},{"VendorName":"CASTLE BRANDS CORP.","TotalSalesDollars":2269164.24,"TotalPurchaseDollars":1626446.23,"GrossProfit":642718.01,"ProfitMargine":40.26,"StockTurnOver":1.67,"UnsoldInventoryValue":-7444.61,"SalesPurchaseRatio":2.31,"OrderSize":"Large"},{"VendorName":"DISARONNO INTERNATIONAL LLC","TotalSalesDollars":1725259.23,"TotalPurchaseDollars":1141947.85,"GrossProfit":583311.38,"ProfitMargine":43.08,"StockTurnOver":16.89,"UnsoldInventoryValue":-14595.5,"SalesPurchaseRatio":22.26,"OrderSize":"Large"},{"VendorName":"SIDNEY FRANK IMPORTING CO","TotalSalesDollars":2256371.25,"TotalPurchaseDollars":1715908.88,"GrossProfit":540462.37,"ProfitMargine":37.12,"StockTurnOver":1.74,"UnsoldInventoryValue":-487.77,"SalesPurchaseRatio":2.29,"OrderSize":"Large"},{"VendorName":"FREDERICK WILDMAN & SONS","TotalSalesDollars":1021533.87,"TotalPurchaseDollars":602133.68,"GrossProfit":419400.19,"ProfitMargine":40.94,"StockTurnOver":2.2,"UnsoldInventoryValue":-46011.8,"SalesPurchaseRatio":3.31,"OrderSize":"Small"},{"VendorName":"VINILANDIA USA","TotalSalesDollars":786927.86,"TotalPurchaseDollars":501087.21,"GrossProfit":285840.65,"ProfitMargine":37.23,"StockTurnOver":1.8,"UnsoldInventoryValue":13040.67,"SalesPurchaseRatio":2.79,"OrderSize":"Small"},{"VendorName":"SHAW ROSS INT L IMP LTD","TotalSalesDollars":840689.58,"TotalPurchaseDollars":596585.0,"GrossProfit":244104.58,"ProfitMargine":26.35,"StockTurnOver":0.96,"UnsoldInventoryValue":3797.76,"SalesPurchaseRatio":1.38,"OrderSize":"Median"},{"VendorName":"PHILLIPS PRODUCTS CO.","TotalSalesDollars":521941.7,"TotalPurchaseDollars":329509.32,"GrossProfit":192432.38,"ProfitMargine":47.26,"StockTurnOver":1.51,"UnsoldInventoryValue":-21780.91,"SalesPurchaseRatio":2.1,"OrderSize":"Large"},{"VendorName":"LATITUDE BEVERAGE COMPANY","TotalSalesDollars":466912.8,"TotalPurchaseDollars":309146.24,"GrossProfit":157766.56,"ProfitMargine":34.11,"StockTurnOver":1.15,"UnsoldInventoryValue":16944.99,"SalesPurchaseRatio":1.8,"OrderSize":"Small"},{"VendorName":"CRUSH WINES","TotalSalesDollars":370561.89,"TotalPurchaseDollars":220914.0,"GrossProfit":149647.89,"ProfitMargine":37.56,"StockTurnOver":1.3,"UnsoldInventoryValue":-6799.07,"SalesPurchaseRatio":2.03,"OrderSize":"Small"},{"VendorName":"VRANKEN AMERICA","TotalSalesDollars":340799.11,"TotalPurchaseDollars":207317.5,"GrossProfit":133481.61,"ProfitMargine":52.54,"StockTurnOver":2.4,"UnsoldInventoryValue":-12077.46,"SalesPurchaseRatio":3.67,"OrderSize":"Median"},{"VendorName":"CHARLES JACQUIN ET CIE INC","TotalSalesDollars":446020.41,"TotalPurchaseDollars":325229.02,"GrossProfit":120791.39,"ProfitMargine":27.06,"StockTurnOver":1.01,"UnsoldInventoryValue":2586.61,"SalesPurchaseRatio":1.4,"OrderSize":"Large"},{"VendorName":"FLAG HILL WINERY & VINEYARD","TotalSalesDollars":411807.12,"TotalPurchaseDollars":300403.2,"GrossProfit":111403.92,"ProfitMargine":35.89,"StockTurnOver":1.52,"UnsoldInventoryValue":1885.12,"SalesPurchaseRatio":2.21,"OrderSize":"Median"},{"VendorName":"OLE SMOKY DISTILLERY LLC","TotalSalesDollars":498602.64,"TotalPurchaseDollars":387622.69,"GrossProfit":110979.95,"ProfitMargine":31.97,"StockTurnOver":1.48,"UnsoldInventoryValue":4098.51,"SalesPurchaseRatio":1.92,"OrderSize":"Median"}];
+const BRANDS=[{"Description":"C Y Toro Frontera Pnt Grigio","TotalSalesDollars":9999.47,"ProfitMargine":39.6},{"Description":"Spottswoode Cab Svgn Napa","TotalSalesDollars":9989.38,"ProfitMargine":71.48},{"Description":"McWilliams Hanwood Shiraz","TotalSalesDollars":9988.46,"ProfitMargine":38.03},{"Description":"Tullamore Dew Crock","TotalSalesDollars":9986.67,"ProfitMargine":7.76},{"Description":"Montezuma Blue","TotalSalesDollars":9974.51,"ProfitMargine":25.67},{"Description":"Brugal XV Rum","TotalSalesDollars":9971.01,"ProfitMargine":84.65},{"Description":"Mas Donis Montsant Old Vines","TotalSalesDollars":9963.88,"ProfitMargine":44.49},{"Description":"Calling All Angels Chard","TotalSalesDollars":9963.53,"ProfitMargine":36.1},{"Description":"Casa Silva Los Lingues Cab S","TotalSalesDollars":9961.77,"ProfitMargine":63.07},{"Description":"Luigi Bosca RSV Cab Svgn","TotalSalesDollars":9960.35,"ProfitMargine":25.87},{"Description":"Bluebird Pinot Noir","TotalSalesDollars":9959.21,"ProfitMargine":34.47},{"Description":"Balletto 15 Rose Pnt Nr RRV","TotalSalesDollars":9956.14,"ProfitMargine":15.82},{"Description":"Heartland Spice Trader Sh/CS","TotalSalesDollars":9950.78,"ProfitMargine":38.22},{"Description":"Ruca Malen Malbec Rsv","TotalSalesDollars":9945.95,"ProfitMargine":29.02},{"Description":"Beringer Luminus Chard","TotalSalesDollars":9945.25,"ProfitMargine":27.14},{"Description":"Secco-Bertani Verona","TotalSalesDollars":9939.59,"ProfitMargine":36.32},{"Description":"Lago Rose","TotalSalesDollars":9937.35,"ProfitMargine":24.08},{"Description":"Penfolds Koonunga Hill Chard","TotalSalesDollars":9925.18,"ProfitMargine":44.67},{"Description":"Ch St Jean Soiree Red","TotalSalesDollars":9886.62,"ProfitMargine":55.48},{"Description":"Brotte La Griveliere CDR","TotalSalesDollars":9872.88,"ProfitMargine":39.99},{"Description":"Lavergne Brdx Rouge","TotalSalesDollars":9867.65,"ProfitMargine":31.26},{"Description":"Rihaku Nigori Dreamy Clouds","TotalSalesDollars":9854.52,"ProfitMargine":32.28},{"Description":"Avion Tasting Flight 3/375mL","TotalSalesDollars":9852.96,"ProfitMargine":46.85},{"Description":"Ch La Mission Haut Brion 10","TotalSalesDollars":9849.5,"ProfitMargine":38.77},{"Description":"Glendalough 13 Yr Sngle Malt","TotalSalesDollars":9838.85,"ProfitMargine":73.68},{"Description":"Cousino Macul RSV Cab Svgn","TotalSalesDollars":9821.93,"ProfitMargine":44.08},{"Description":"Terre Rouge Syrah Les Cotes","TotalSalesDollars":9813.79,"ProfitMargine":40.63},{"Description":"Uncle Val's Peppered Gin","TotalSalesDollars":9812.45,"ProfitMargine":70.49},{"Description":"Ch Lynch Bages Paulliac 11","TotalSalesDollars":9799.3,"ProfitMargine":94.32},{"Description":"Dom Tempier Bandol Rose Pro","TotalSalesDollars":9749.32,"ProfitMargine":41.52},{"Description":"Tequila Rose Strawberry Gift","TotalSalesDollars":9698.52,"ProfitMargine":31.91},{"Description":"Chene Bleu Rose","TotalSalesDollars":9686.86,"ProfitMargine":33.41},{"Description":"Revana Cab Svgn Napa Vly","TotalSalesDollars":9679.12,"ProfitMargine":79.95},{"Description":"Amaretto di Amore VAP","TotalSalesDollars":9650.35,"ProfitMargine":5.74},{"Description":"Hess Select Pnt Nr","TotalSalesDollars":9642.64,"ProfitMargine":53.07},{"Description":"Rioja Vega Tempranillo Garna","TotalSalesDollars":9628.67,"ProfitMargine":61.02},{"Description":"Cameron Hughes Cam Col Cab S","TotalSalesDollars":9603.24,"ProfitMargine":67.15},{"Description":"Pink Pegau Rose","TotalSalesDollars":9595.2,"ProfitMargine":42.29},{"Description":"Ca'Momi Pinot Noir Napa Vall","TotalSalesDollars":9584.62,"ProfitMargine":48.77},{"Description":"14 Hands Red Blend Ltd","TotalSalesDollars":9570.42,"ProfitMargine":45.95},{"Description":"Gallo Twin Valley Hearty Bur","TotalSalesDollars":9543.57,"ProfitMargine":35.17},{"Description":"Mayu Pedro Ximenez","TotalSalesDollars":9534.66,"ProfitMargine":56.33},{"Description":"Phillips Lust Znfdl Lodi","TotalSalesDollars":9526.32,"ProfitMargine":79.22},{"Description":"Bridlewood Pnt Nr","TotalSalesDollars":9520.47,"ProfitMargine":33.87},{"Description":"Marcus James Malbec Mendoza","TotalSalesDollars":9518.18,"ProfitMargine":34.03},{"Description":"Grant's Ale Cask Finish","TotalSalesDollars":9515.24,"ProfitMargine":53.09},{"Description":"Caffo Amaretto Liqueur","TotalSalesDollars":9515.08,"ProfitMargine":75.35},{"Description":"Devils Spring Vodka","TotalSalesDollars":9492.72,"ProfitMargine":54.83},{"Description":"Northstar Merlot Columbia","TotalSalesDollars":9481.8,"ProfitMargine":33.07},{"Description":"Pura Vida Silver Tequila","TotalSalesDollars":9469.54,"ProfitMargine":38.34},{"Description":"Callia Alta Malbec","TotalSalesDollars":9461.46,"ProfitMargine":40.51},{"Description":"Square One Bergamot Organic","TotalSalesDollars":9459.78,"ProfitMargine":65.86},{"Description":"Gerard Bertrand Pnt Nr Rsv","TotalSalesDollars":9456.26,"ProfitMargine":30.71},{"Description":"Renzo Masi Chianti Rufina","TotalSalesDollars":9448.83,"ProfitMargine":35.88},{"Description":"Casa Ferreirinha Esteva Doro","TotalSalesDollars":9411.18,"ProfitMargine":41.28},{"Description":"Schramsberg Mirabelle B Rose","TotalSalesDollars":9408.24,"ProfitMargine":38.83},{"Description":"Bleu de Mer Rose","TotalSalesDollars":9404.76,"ProfitMargine":29.7},{"Description":"Coldcock American Herbal Whi","TotalSalesDollars":9399.81,"ProfitMargine":39.24},{"Description":"24 Knots Pnt Nr","TotalSalesDollars":9393.62,"ProfitMargine":47.99},{"Description":"C Y Toro Frontera Carmenere","TotalSalesDollars":9385.73,"ProfitMargine":37.77},{"Description":"Pepperwood Grove Pnt Nr","TotalSalesDollars":9378.43,"ProfitMargine":47.49},{"Description":"Flora de Cana Black 5 YO Rum","TotalSalesDollars":9376.16,"ProfitMargine":65.28},{"Description":"Due Torri Pnt Nr del Venezie","TotalSalesDollars":9372.38,"ProfitMargine":38.81},{"Description":"Kim Crawford Pnt Gr Marlboro","TotalSalesDollars":9359.92,"ProfitMargine":19.37},{"Description":"Deep Eddy Vodka","TotalSalesDollars":9353.56,"ProfitMargine":42.36},{"Description":"Cryptic California Red","TotalSalesDollars":9351.54,"ProfitMargine":33.75},{"Description":"Trentadue Znfdl Alex Vly","TotalSalesDollars":9342.67,"ProfitMargine":34.22},{"Description":"Canella Bellini Fusion","TotalSalesDollars":9320.44,"ProfitMargine":23.92},{"Description":"Sea Hagg Spiced Rum","TotalSalesDollars":9319.24,"ProfitMargine":48.94},{"Description":"The Seeker Malbec","TotalSalesDollars":9318.29,"ProfitMargine":35.55},{"Description":"Laya Tinto Almansa","TotalSalesDollars":9310.79,"ProfitMargine":30.27},{"Description":"Banfi Poggio Alle Mura Montl","TotalSalesDollars":9308.6,"ProfitMargine":28.8},{"Description":"Catalpa Malbec","TotalSalesDollars":9269.79,"ProfitMargine":39.6},{"Description":"Frey Znfdl Organic Mendocino","TotalSalesDollars":9266.15,"ProfitMargine":33.01},{"Description":"Granite Lightning Whiskey","TotalSalesDollars":9264.69,"ProfitMargine":37.35},{"Description":"Armand de Brignac Brut Rose","TotalSalesDollars":9239.78,"ProfitMargine":51.84},{"Description":"Canella Prosecco Di Conegli","TotalSalesDollars":9224.66,"ProfitMargine":37.15},{"Description":"A Bichot Morgon Les Charmes","TotalSalesDollars":9209.12,"ProfitMargine":84.26},{"Description":"Cruzan Vanilla Flavored Rum","TotalSalesDollars":9198.63,"ProfitMargine":23.16},{"Description":"Corral De Peidra Cab Svgn","TotalSalesDollars":9196.54,"ProfitMargine":33.35},{"Description":"Cantele Salice Salentino Rsv","TotalSalesDollars":9190.06,"ProfitMargine":42.74},{"Description":"DeWetshof Limestone Hl Chard","TotalSalesDollars":9177.07,"ProfitMargine":28.06},{"Description":"Montes RSV Colchagua Malbec","TotalSalesDollars":9157.95,"ProfitMargine":35.48},{"Description":"Barenjager Honey & Bourbon","TotalSalesDollars":9154.68,"ProfitMargine":63.66},{"Description":"Glenfiddich Trio 200ml Pack","TotalSalesDollars":9148.17,"ProfitMargine":43.89},{"Description":"Kahlua Hazelnut","TotalSalesDollars":9138.01,"ProfitMargine":80.11},{"Description":"Caposaldo Prosecco Brut","TotalSalesDollars":9137.04,"ProfitMargine":34.32},{"Description":"Skyy Watermelon Fresca Vodka","TotalSalesDollars":9124.83,"ProfitMargine":42.76},{"Description":"Pinnacle Pecan Pie","TotalSalesDollars":9123.39,"ProfitMargine":77.11},{"Description":"Root 1 Pnt Nr","TotalSalesDollars":9121.53,"ProfitMargine":41.58},{"Description":"Barkan Clsc Cab Svgn","TotalSalesDollars":9121.48,"ProfitMargine":34.27},{"Description":"Antinori Tignanello","TotalSalesDollars":9115.97,"ProfitMargine":48.28},{"Description":"Henkell Brut","TotalSalesDollars":9085.74,"ProfitMargine":32.33},{"Description":"Sterling Carneros Pnt Nr","TotalSalesDollars":9084.58,"ProfitMargine":51.87},{"Description":"Berentzen Apple Liqueur","TotalSalesDollars":9077.41,"ProfitMargine":81.51},{"Description":"Bon Affair Svgn Bl Spritzer","TotalSalesDollars":9076.91,"ProfitMargine":44.58},{"Description":"Domain Drouhin Pnt Nr Ore","TotalSalesDollars":9069.84,"ProfitMargine":37.59},{"Description":"Rosemount Gewurz/Rsl","TotalSalesDollars":9045.22,"ProfitMargine":34.27},{"Description":"Ruffino Chianti Clsc Santdam","TotalSalesDollars":9044.4,"ProfitMargine":42.5},{"Description":"Black Button Citrus Gin","TotalSalesDollars":9032.83,"ProfitMargine":73.71},{"Description":"El Jimador Silver Tequila","TotalSalesDollars":9030.98,"ProfitMargine":20.94},{"Description":"Firefly Blackberry Moonshine","TotalSalesDollars":9023.98,"ProfitMargine":64.96},{"Description":"El Toro Gold Tequila","TotalSalesDollars":9012.72,"ProfitMargine":27.75},{"Description":"Three Olives Chocolate Vodka","TotalSalesDollars":9001.75,"ProfitMargine":87.93},{"Description":"Robert Sinskey POV Napa Red","TotalSalesDollars":8998.49,"ProfitMargine":61.89},{"Description":"DeLille Cellars D2","TotalSalesDollars":8985.86,"ProfitMargine":79.3},{"Description":"Crown Royal No Harvest Rye","TotalSalesDollars":8978.88,"ProfitMargine":61.45},{"Description":"Malibu Red","TotalSalesDollars":8970.83,"ProfitMargine":70.44},{"Description":"Bird Dog Chocolate Whiskey","TotalSalesDollars":8970.27,"ProfitMargine":48.16},{"Description":"Sea Hagg Amber Rum","TotalSalesDollars":8956.8,"ProfitMargine":30.57},{"Description":"Flagstone Noon Gun White","TotalSalesDollars":8926.23,"ProfitMargine":32.47},{"Description":"NxNW Red Columbia Valley","TotalSalesDollars":8916.63,"ProfitMargine":55.1},{"Description":"M & R Sparkling Rose","TotalSalesDollars":8902.21,"ProfitMargine":42.92},{"Description":"Dom Serene Rose","TotalSalesDollars":8884.85,"ProfitMargine":38.11},{"Description":"Antinori Orvieto Clsc Campo","TotalSalesDollars":8881.82,"ProfitMargine":42.36},{"Description":"Cono Sur Organic Cab Svgn","TotalSalesDollars":8875.27,"ProfitMargine":38.86},{"Description":"Santa Rita Secret Rsv Red","TotalSalesDollars":8864.14,"ProfitMargine":39.52},{"Description":"Mollydooker The Boxer Shiraz","TotalSalesDollars":8862.58,"ProfitMargine":34.61},{"Description":"Lobster & Shrimp Muscadet","TotalSalesDollars":8856.77,"ProfitMargine":59.29},{"Description":"Rainstorm Pnt Nr","TotalSalesDollars":8844.43,"ProfitMargine":39.46},{"Description":"Camus Extra Elegance","TotalSalesDollars":8839.74,"ProfitMargine":83.03},{"Description":"Dunn Cab Svgn Howell Mtn","TotalSalesDollars":8839.32,"ProfitMargine":42.74},{"Description":"Castello Banfi Brun Montalcn","TotalSalesDollars":8832.11,"ProfitMargine":59.58},{"Description":"Yellow Tail RSV Shiraz Ausl","TotalSalesDollars":8818.28,"ProfitMargine":45.95},{"Description":"Felino Vino Cobos Malbec","TotalSalesDollars":8815.1,"ProfitMargine":29.51},{"Description":"Perrier Jouet BE Luxury Case","TotalSalesDollars":8801.22,"ProfitMargine":65.78},{"Description":"Bertani Amarone Valpolicell","TotalSalesDollars":8799.12,"ProfitMargine":56.55},{"Description":"Kendall Jackson Sp Sel Chard","TotalSalesDollars":8776.68,"ProfitMargine":33.06},{"Description":"Principato Pnt Nr Pavia","TotalSalesDollars":8747.61,"ProfitMargine":32.71},{"Description":"Huber Hugo Gruner Veltliner","TotalSalesDollars":8741.4,"ProfitMargine":40.23},{"Description":"Pumpkin Face Rum","TotalSalesDollars":8739.97,"ProfitMargine":60.85},{"Description":"Talbott Logan Slpy Hl Pnt Nr","TotalSalesDollars":8731.08,"ProfitMargine":43.81},{"Description":"The Calling Cab Svgn Rio Lgo","TotalSalesDollars":8721.51,"ProfitMargine":31.25},{"Description":"A Bichot Petit Chablis","TotalSalesDollars":8693.33,"ProfitMargine":33.82},{"Description":"Colombo Marsala Dry","TotalSalesDollars":8687.93,"ProfitMargine":33.14},{"Description":"Groth Chard Napa","TotalSalesDollars":8673.12,"ProfitMargine":23.61}];
+
+const fmt=v=>v>=1e6?'$'+(v/1e6).toFixed(1)+'M':v>=1e3?'$'+(v/1e3).toFixed(0)+'K':'$'+v.toFixed(0);
+const osc={'Large':'#3b82f6','Median':'#f59e0b','Small':'#22c55e'};
+const tt=document.getElementById('tooltip');
+const ttName=document.getElementById('ttName');
+const ttVal=document.getElementById('ttVal');
+const ttVal2=document.getElementById('ttVal2');
+
+function showTT(e,name,v1,v2){
+  ttName.textContent=name;
+  ttVal.textContent=v1;
+  ttVal.style.color='#60a5fa';
+  ttVal2.textContent=v2||'';
+  ttVal2.style.color='#22c55e';
+  tt.style.display='block';
+  moveTT(e);
+}
+function moveTT(e){tt.style.left=(e.clientX+14)+'px';tt.style.top=(e.clientY-10)+'px';}
+function hideTT(){tt.style.display='none';}
+document.addEventListener('mousemove',moveTT);
+
+// Animated counter
+function animateVal(el,target,fmtFn,dur=1000){
+  let start=null;
+  const step=ts=>{
+    if(!start)start=ts;
+    const p=Math.min((ts-start)/dur,1);
+    const ease=1-Math.pow(1-p,3);
+    el.textContent=fmtFn(target*ease);
+    if(p<1)requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function render(){
+  const orderFilter=document.getElementById('orderFilter').value;
+  const search=document.getElementById('searchBox').value.toLowerCase();
+  let fv=VENDORS;
+  if(orderFilter!=='All')fv=fv.filter(v=>v.OrderSize===orderFilter);
+  if(search)fv=fv.filter(v=>v.VendorName.toLowerCase().includes(search));
+  let fb=BRANDS;
+  if(search)fb=fb.filter(b=>b.Description.toLowerCase().includes(search));
+
+  document.getElementById('filterCount').textContent=fv.length+' vendors · '+fb.length+' brands';
+
+  // KPIs
+  const sales=fv.reduce((s,v)=>s+v.TotalSalesDollars,0);
+  const profit=fv.reduce((s,v)=>s+v.GrossProfit,0);
+  const margin=fv.length?fv.reduce((s,v)=>s+v.ProfitMargine,0)/fv.length:0;
+  const turnover=fv.length?fv.reduce((s,v)=>s+v.StockTurnOver,0)/fv.length:0;
+  const unsold=fv.reduce((s,v)=>s+v.UnsoldInventoryValue,0);
+  const mb=margin>=30?['bg-green','▲ Healthy']:margin>=15?['bg-yellow','► Moderate']:['bg-red','▼ Low'];
+  const iw=unsold>500000;
+
+  const kpis=[
+    {label:'Total Sales',value:sales,fmt:fmt,icon:'💰',color:'green',badge:'bg-green',badgeTxt:'▲ Top Line',sub:'Sum of all vendor sales'},
+    {label:'Gross Profit',value:profit,fmt:fmt,icon:'📈',color:'',badge:'bg-blue',badgeTxt:'✓ Net Earned',sub:'Sales minus purchase cost'},
+    {label:'Avg Profit Margin',value:margin,fmt:v=>v.toFixed(1)+'%',icon:'🎯',color:'amber',badge:mb[0],badgeTxt:mb[1],sub:'Mean across vendors'},
+    {label:'Avg Stock Turnover',value:turnover,fmt:v=>v.toFixed(2)+'x',icon:'🔄',color:'purple',badge:'bg-purple',badgeTxt:'↻ Turns',sub:'Sales qty / Purchase qty'},
+    {label:'Unsold Inventory',value:unsold,fmt:fmt,icon:iw?'⚠️':'📦',color:iw?'red':'',badge:iw?'bg-red':'bg-green',badgeTxt:iw?'! High Risk':'✓ Managed',sub:'Capital locked in stock'},
+  ];
+  const grid=document.getElementById('kpiGrid');
+  grid.innerHTML=kpis.map((k,i)=>`
+    <div class="kpi-card ${k.color}">
+      <div class="kpi-icon">${k.icon}</div>
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value" id="kv${i}">—</div>
+      <span class="kpi-badge ${k.badge}">${k.badgeTxt}</span>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>
+  `).join('');
+  kpis.forEach((k,i)=>animateVal(document.getElementById('kv'+i),k.value,k.fmt));
+
+  // Top 10 vendor bars
+  const top10=[...fv].sort((a,b)=>b.GrossProfit-a.GrossProfit).slice(0,10);
+  const maxGP=top10[0]?.GrossProfit||1;
+  document.getElementById('vendorBars').innerHTML=top10.length===0?'<div class="no-data">No vendors match filters</div>':
+    top10.map(v=>`
+      <div class="bar-row"
+        onmouseenter="showTT(event,'${v.VendorName.replace(/'/g,"\\'")}','Profit: ${fmt(v.GrossProfit)}','Margin: ${v.ProfitMargine.toFixed(1)}%')"
+        onmouseleave="hideTT()">
+        <div class="bar-label" title="${v.VendorName}">${v.VendorName.length>22?v.VendorName.slice(0,22)+'…':v.VendorName}</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${(v.GrossProfit/maxGP*100).toFixed(1)}%;background:${osc[v.OrderSize]||'#3b82f6'}">
+            <span class="bar-val">${fmt(v.GrossProfit)}</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+  // Histogram
+  const buckets=[0,10,20,30,40,50,60,70,80,90].map(r=>({r,label:r+'-'+(r+10)+'%',count:0}));
+  fb.forEach(b=>{const k=Math.min(9,Math.floor(b.ProfitMargine/10));buckets[k].count++;});
+  const maxC=Math.max(...buckets.map(b=>b.count),1);
+  const histColors=r=>r<20?'#ef4444':r<30?'#f59e0b':'#22c55e';
+  document.getElementById('histogram').innerHTML=buckets.map(b=>`
+    <div class="hist-col"
+      onmouseenter="showTT(event,'${b.label}','Brands: ${b.count}','')"
+      onmouseleave="hideTT()">
+      <div class="hist-bar" style="height:${Math.max(2,(b.count/maxC*140)).toFixed(0)}px;background:${histColors(b.r)}"></div>
+      <div class="hist-lbl">${b.label.replace('%','')}<br>${b.count}</div>
+    </div>
+  `).join('');
+
+  // Scatter canvas
+  const canvas=document.getElementById('scatterCanvas');
+  const wrap=canvas.parentElement;
+  const W=wrap.clientWidth||500;
+  const H=260;
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const pad={l:40,r:20,t:15,b:30};
+  const sample=fb.slice(0,120);
+  const maxS=Math.max(...sample.map(d=>d.TotalSalesDollars),1);
+  const maxM=Math.max(...sample.map(d=>d.ProfitMargine),1);
+  const sMed2=sample.slice().sort((a,b)=>a.TotalSalesDollars-b.TotalSalesDollars)[Math.floor(sample.length/2)]?.TotalSalesDollars||5000;
+  const mMed2=sample.slice().sort((a,b)=>a.ProfitMargine-b.ProfitMargine)[Math.floor(sample.length/2)]?.ProfitMargine||35;
+  const toX=v=>pad.l+(v/maxS)*(W-pad.l-pad.r);
+  const toY=v=>H-pad.b-(v/maxM)*(H-pad.t-pad.b);
+  ctx.clearRect(0,0,W,H);
+  // grid
+  ctx.strokeStyle='#1e293b'; ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=pad.t+i*(H-pad.t-pad.b)/4;
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
+    ctx.fillStyle='#475569';ctx.font='9px monospace';
+    ctx.fillText(((1-i/4)*maxM).toFixed(0)+'%',2,y+3);
+  }
+  // median lines
+  const mx=toX(sMed2),my=toY(mMed2);
+  ctx.strokeStyle='#334155';ctx.setLineDash([4,3]);ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(mx,pad.t);ctx.lineTo(mx,H-pad.b);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(pad.l,my);ctx.lineTo(W-pad.r,my);ctx.stroke();
+  ctx.setLineDash([]);
+  // quadrant labels
+  ctx.fillStyle='#334155';ctx.font='bold 10px sans-serif';
+  ctx.fillText('STARS',mx+6,pad.t+14);
+  ctx.fillText('NICHE',pad.l+4,pad.t+14);
+  ctx.fillText('CASH COWS',mx+6,H-pad.b-6);
+  ctx.fillText('DOGS',pad.l+4,H-pad.b-6);
+  // dots
+  sample.forEach(d=>{
+    const x=toX(d.TotalSalesDollars),y=toY(d.ProfitMargine);
+    const star=d.TotalSalesDollars>=sMed2&&d.ProfitMargine>=mMed2;
+    const cow=d.TotalSalesDollars>=sMed2&&d.ProfitMargine<mMed2;
+    const niche=d.TotalSalesDollars<sMed2&&d.ProfitMargine>=mMed2;
+    const color=star?'#22c55e':cow?'#f59e0b':niche?'#a855f7':'#ef4444';
+    ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);
+    ctx.fillStyle=color+'bb';ctx.fill();
+    ctx.strokeStyle=color;ctx.lineWidth=0.5;ctx.stroke();
+  });
+
+  // Ratio bars
+  const ratios=[...fv].sort((a,b)=>b.SalesPurchaseRatio-a.SalesPurchaseRatio).slice(0,15);
+  const maxR=Math.max(...ratios.map(r=>r.SalesPurchaseRatio),1);
+  document.getElementById('ratioBars').innerHTML=ratios.length===0?'<div class="no-data">No data</div>':
+    ratios.map(v=>`
+      <div class="bar-row"
+        onmouseenter="showTT(event,'${v.VendorName.replace(/'/g,"\\'")}','S/P Ratio: ${v.SalesPurchaseRatio.toFixed(2)}x',v.SalesPurchaseRatio>=1.3?'✓ Efficient':'')"
+        onmouseleave="hideTT()">
+        <div class="bar-label" title="${v.VendorName}">${v.VendorName.length>18?v.VendorName.slice(0,18)+'…':v.VendorName}</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${(v.SalesPurchaseRatio/maxR*100).toFixed(1)}%;background:${v.SalesPurchaseRatio>=1.3?'#22c55e':'#475569'}">
+            <span class="bar-val">${v.SalesPurchaseRatio.toFixed(1)}x</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+  // Footer time
+  document.getElementById('footerTime').textContent='Last Refreshed: '+new Date().toLocaleString();
+  document.getElementById('liveBadge').textContent='● LIVE · '+new Date().toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+render();
+window.addEventListener('resize',render);
+</script>
+</body>
+</html>

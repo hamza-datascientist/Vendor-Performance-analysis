@@ -1,0 +1,5 @@
+2026-05-22 16:12:38,764 - INFO - ingesting begin_inventory.csv in database
+2026-05-22 16:12:43,955 - INFO - ingesting end_inventory.csv in database
+2026-05-22 16:12:59,133 - INFO - ingesting purchases.csv in database
+2026-05-22 16:14:13,339 - INFO - ingesting purchase_prices.csv in database
+2026-05-22 16:14:48,848 - INFO - ingesting sales.csv in database
