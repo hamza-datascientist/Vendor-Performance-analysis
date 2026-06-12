@@ -1,13 +1,17 @@
 🥃 Vendor Performance Analysis
+
 Transforming raw liquor retail data into actionable business intelligence.
 
 📌 Problem Statement
+
 A liquor retail company had no visibility into which vendors were profitable, which products were slow-moving, and whether bulk purchasing actually reduced costs. This project answers all of that — with data.
 
 🔍 Key Business Insights
+
 FindingInsight📦 Top 10 vendorsDrive 66% of total purchases → supply chain risk💰 Bulk purchasingReduces unit cost by ~72%📊 Low-volume vendorsHave higher margins (40-42%) vs top vendors (30-31%)✅ Hypothesis Testp < 0.05 → margin difference is statistically significant
 
 🛠️ Tech Stack
+
 Python Pandas SQL SQLite SQLAlchemy Matplotlib Seaborn.
 
 🗂️ Project Structure
@@ -32,7 +36,7 @@ t-test to validate margin difference between vendor tiers
 Zero-dependency HTML dashboard with live filters, KPI cards, scatter quadrant analysis & bar charts.
 
 📊 Live Dashboard
-🔗 View Live Dashboard
+🔗 [View Live Dashboard](https://hamza-datascientist.github.io/Vendor-Performance-analysis/)
 
 💡 **Business Questions Answered**
 
